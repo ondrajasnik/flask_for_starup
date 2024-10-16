@@ -1,70 +1,65 @@
-import datetime
+# Standard Library imports
 
-from flask_appbuilder import Model
-from sqlalchemy import Column, Date, ForeignKey, Integer, String, Boolean
+# Core Flask imports
+from flask_login import UserMixin
+
+# Third-party imports
+from sqlalchemy import (
+    Integer,
+    Column,
+    Text,
+    String,
+    Boolean,
+    DateTime,
+    ForeignKey,
+    func,
+)
 from sqlalchemy.orm import relationship
 
-mindate = datetime.date(datetime.MINYEAR, 1, 1)
+# App imports
+from app import db_manager
+
+# alias
+Base = db_manager.base
 
 
-class ContactGroup(Model):
-    id = Column(Integer, primary_key=True)
-    name = Column(String(50), unique=True, nullable=False)
-
-    def __repr__(self):
-        return self.name
-
-
-class Gender(Model):
-    id = Column(Integer, primary_key=True)
-    name = Column(String(50), unique=True, nullable=False)
-
-    def __repr__(self):
-        return self.name
+class Account(Base):
+    __tablename__ = "accounts"
+    account_id = Column(Integer, primary_key=True)
+    created_at = Column(DateTime, server_default=func.now())
+    users = relationship("User", back_populates="account")
 
 
-class Contact(Model):
-    id = Column(Integer, primary_key=True)
-    name = Column(String(150), unique=True, nullable=False)
-    address = Column(String(564))
-    birthday = Column(Date, nullable=True)
-    personal_phone = Column(String(20))
-    personal_celphone = Column(String(20))
-    contact_group_id = Column(Integer, ForeignKey("contact_group.id"), nullable=False)
-    contact_group = relationship("ContactGroup")
-    gender_id = Column(Integer, ForeignKey("gender.id"), nullable=False)
-    gender = relationship("Gender")
+class Role(Base):
+    __tablename__ = "roles"
+    role_id = Column(Integer, primary_key=True)
+    name = Column(Text, nullable=False)
 
     def __repr__(self):
-        return self.name
+        return f"<Role {self.name}>"
 
-    def month_year(self):
-        date = self.birthday or mindate
-        return datetime.datetime(date.year, date.month, 1) or mindate
 
-    def year(self):
-        date = self.birthday or mindate
-        return datetime.datetime(date.year, 1, 1)
-    
+class UserRole(Base):
+    __tablename__ = "users_x_roles"
+    user_id = Column(Integer, ForeignKey("users.user_id"), primary_key=True)
+    role_id = Column(Integer, ForeignKey("roles.role_id"), primary_key=True)
+    assigned_at = Column(DateTime, nullable=False, server_default=func.now())
 
-class vyrobek(Model):
-    id = Column(Integer, primary_key=True)
-    nazev = Column(String(64), unique=True, nullable=False)
-    serial_number = Column(Integer, unique=True)     
-    
+
+class User(UserMixin, Base):
+    __tablename__ = "users"
+    user_id = Column(Integer, primary_key=True)
+    username = Column(Text)
+    email = Column(String, nullable=False, unique=True)
+    password_hash = Column(String(128), nullable=False)
+    confirmed = Column(Boolean, nullable=False, server_default="false")
+    created_at = Column(DateTime, nullable=False, server_default=func.now())
+    account_id = Column(Integer, ForeignKey("accounts.account_id"), nullable=False)
+    account = relationship("Account", back_populates="users")
+    roles = relationship("Role", secondary="users_x_roles")
+
+    def get_id(self):
+        return self.user_id
+
     def __repr__(self):
-        return self.name
-    
-class Sklad(Model):
-    id = Column(Integer, primary_key=True)
-    nazev = Column(String(64), unique=True, nullable=False)
-    datum = Column(Date, nullable=True)
-    ks = Column(Integer, nullable=True)     
-    stav = Column(Boolean, nullable=True) 
-    
-    def __repr__(self):
-        return self.name    
-    
-
-
-
+        return f"<User {self.email}>"
