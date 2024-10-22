@@ -10,8 +10,6 @@ services:
     environment:
       - FLASK_ENV=development
       - SQLALCHEMY_DATABASE_URI=mysql+pymysql://flask_user:flask_password@db:3306/flask_db
-    volumes:
-      - .:/app
     ports:
       - "5000:5000"
     depends_on:
