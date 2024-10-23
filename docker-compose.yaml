@@ -7,11 +7,6 @@ services:
       dockerfile: Dockerfile
     container_name: flask_app
     restart: always
-    environment:
-      - FLASK_CONFIG=dev
-      - SQLALCHEMY_DATABASE_URI=mysql+pymysql://flask_user:flask_password@db:3306/flask_db
-    ## volumes:  
-      ## - .:/app 
     ports:
       - "5000:5000"
     depends_on:
